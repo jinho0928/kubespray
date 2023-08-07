@@ -160,15 +160,49 @@ cert_manager_enabled: false
 
 # MetalLB deployment
 metallb_enabled: false
-metallb_speaker_enabled: false
-# metallb_ip_range:
-#     - "172.22.8.160-172.22.8.180"
-#     - "172.22.8.184-172.22.8.190"
-# metallb_version: v0.9.3
-# metallb_protocol: "layer2"
-
-# metallb_ip_range:
-#   - "10.5.0.50-10.5.0.99"
+metallb_speaker_enabled: '{{ metallb_enabled }}'
+metallb_version: v0.13.5
+metallb_protocol: "layer2"
+metallb_config:
+  address_pools:
+#    pool1:
+#      auto_assign: true
+#      ip_range:
+#        - 10.6.0.0/16
+#    pool2:
+#      auto_assign: true
+#      ip_range:
+#        - 10.10.0.0/16
+#    primary:
+#      auto_assign: true
+#      ip_range:
+#        - 10.96.0.0/16
+#  layer2:
+#    - primary
+#  layer3:
+#    communities:
+#      NO_ADVERTISE: '65535:65282'
+#      vpn-only: '1234:1'
+#    defaults:
+#      hold_time: 120s
+#      peer_port: 179
+#    metallb_peers:
+#      peer1:
+#        address_pool:
+#          - pool1
+#        communities:
+#          - vpn-only
+#        my_asn: 4200000000
+#        peer_address: 10.6.0.1
+#        peer_asn: 64512
+#      peer2:
+#        address_pool:
+#          - pool2
+#        communities:
+#          - NO_ADVERTISE
+#        my_asn: 4200000000
+#        peer_address: 10.10.0.1
+#        peer_asn: 64513
 # metallb_speaker_nodeselector:
 #   kubernetes.io/os: "linux"
 # metallb_controller_nodeselector:
@@ -191,25 +225,13 @@ metallb_speaker_enabled: false
 #     operator: "Equal"
 #     value: ""
 #     effect: "NoSchedule"
-# metallb_version: v0.9.6
-# metallb_protocol: "layer2"
 # metallb_port: "7472"
-# metallb_limits_cpu: "100m"
-# metallb_limits_mem: "100Mi"
-# metallb_additional_address_pools:
-#   kube_service_pool:
-#     ip_range:
-#       - "10.5.1.50-10.5.1.99"
-#     protocol: "layer2"
-#     auto_assign: false
-# metallb_protocol: "bgp"
-# metallb_peers:
-#   - peer_address: 192.0.2.1
-#     peer_asn: 64512
-#     my_asn: 4200000000
-#   - peer_address: 192.0.2.2
-#     peer_asn: 64513
-#     my_asn: 4200000000
+# metallb_memberlist_port: '7946'
+metallb_limits_cpu: "100m"
+metallb_limits_mem: "100Mi"
+
+
+
 
 # The plugin manager for kubectl
 krew_enabled: false

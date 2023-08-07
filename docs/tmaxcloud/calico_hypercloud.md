@@ -28,8 +28,57 @@ $ ip addr show dev enp3s0
 calico_ip_auto_method: "cidr=192.168.7.0/24"
 ```
 
-### AWS 환경에서 IP-in-IP 모드 사용을 위한 설정입니다.
+## AWS 환경에서 IP-in-IP 모드 사용을 위한 설정
 파일: inventory/tmaxcloud/group_vars/k8s_cluster/k8s-net-calico.yml
 ```yml
 calico_ipip_mode: 'Always'
 ```
+
+## IPIP mode 및 vxlan mode 설정
+### IPIP mode enable
+* ipip mode와 vxlan_mode는 동시에 enable할 수 없으므로 ipip 설정시 vxlan_mode를 disable할 것
+* calico_ipip_mode : calico 에서 IP-in-IP를 활성화 할 것 인지 여부 
+* calico_ipv4pool_ipip: 기본 ippool에서 IP-in-IP를 활성화 할 것 인지 여부 
+* default 설정은 calico-node ipip 설정은 disable, default ip pool ipip는 enable, vxlan mode disable임
+
+```yml
+calico_ipv4pool_ipip: "Always"
+calico_ipip_mode: "Never"
+calico_vxlan_mode: "Never"
+```
+
+
+### Vxlan_mode enable 설정
+* ipip mode와 vxlan_mode는 동시에 enable할 수 없으므로 vxlan 설정시 ipip mode를 disable할 것
+
+```yml
+calico_ipv4pool_ipip: "Never"
+calico_ipip_mode: "Never"
+calico_vxlan_mode: "Always"
+```
+
+
+## 구축 이후에 위 설정을 변경하는 방법
+### IPIP mode enable 설정
+1. ipip mode나 vxlan mode는 클러스터 구축시에 설정함이 바람직하나 불가피하게 구축후에 설정을 변경해야 할 경우 ipip mode enable 전에 vxlan_mode를 disable할 것
+
+calicoctl patch felixConfiguration default --patch '{"spec": {"vxlanEnabled": false}}’
+calicoctl patch ipPool default-ipv4-ippool --patch '{"spec":{"vxlanMode":"Never"}}’
+
+2. 이후 ippool의 ipip 설정 enable
+
+kubectl edit ippool default-ipv4-ippool -n kube-system 에서 
+ipipMode: "Always"
+
+
+
+### vxlan mode enable 설정 
+1. ipip 설정 disable
+
+kubectl edit ippool default-ipv4-ippool -n kube-system 에서 
+ipipMode: "Never"
+
+2. vxlan mode enable
+
+calicoctl patch felixConfiguration default --patch '{"spec": {"vxlanEnabled": true}}’
+calicoctl patch ipPool default-ipv4-ippool --patch '{"spec":{"vxlanMode":"Always"}}’

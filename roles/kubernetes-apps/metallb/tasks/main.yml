@@ -5,17 +5,18 @@
   when:
     - "kube_proxy_mode == 'ipvs' and not kube_proxy_strict_arp"
 
-- name: Kubernetes Apps | Check cluster settings for MetalLB
-  fail:
-    msg: "metallb_ip_range is mandatory to be specified for MetalLB"
-  when:
-    - metallb_ip_range is not defined or not metallb_ip_range
-
 - name: Kubernetes Apps | Check BGP peers for MetalLB
   fail:
-    msg: "metallb_peers is mandatory when metallb_protocol is bgp"
+    msg: "metallb_peers is mandatory when metallb_protocol is bgp and metallb_speaker_enabled"
   when:
-    - metallb_protocol == 'bgp' and metallb_peers is not defined
+    - metallb_config.layer3 is defined and metallb_speaker_enabled
+    - metallb_config.metallb_peers is not defined or not metallb_config.metallb_peers
+
+- name: Kubernetes Apps | Check that the deprecated 'matallb_auto_assign' variable is not used anymore
+  fail:
+    msg: "'matallb_auto_assign' configuration variable is deprecated, please use 'metallb_auto_assign' instead"
+  when:
+    - matallb_auto_assign is defined
 
 - name: Kubernetes Apps | Check AppArmor status
   command: which apparmor_parser
@@ -34,11 +35,14 @@
 
 - name: Kubernetes Apps | Lay Down MetalLB
   become: true
-  template: { src: "{{ item }}.j2", dest: "{{ kube_config_dir }}/{{ item }}" }
-  with_items: ["metallb.yml", "metallb-config.yml"]
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ kube_config_dir }}/{{ item }}"
+  with_items: ["metallb.yaml", "pools.yaml", "layer2.yaml", "layer3.yaml"]
   register: "rendering"
   when:
     - "inventory_hostname == groups['kube_control_plane'][0]"
+
 
 - name: Kubernetes Apps | Install and configure MetalLB
   kube:
@@ -51,24 +55,3 @@
   when:
     - "inventory_hostname == groups['kube_control_plane'][0]"
 
-- name: Kubernetes Apps | Check existing secret of MetalLB
-  command: "{{ bin_dir }}/kubectl --kubeconfig /etc/kubernetes/admin.conf -n metallb-system get secret memberlist"
-  register: metallb_secret
-  become: true
-  ignore_errors: yes
-  when:
-    - inventory_hostname == groups['kube_control_plane'][0]
-
-- name: Kubernetes Apps | Create random bytes for MetalLB
-  command: "openssl rand -base64 32"
-  register: metallb_rand
-  when:
-    - inventory_hostname == groups['kube_control_plane'][0]
-    - metallb_secret.rc != 0
-
-- name: Kubernetes Apps | Install secret of MetalLB if not existing
-  command: "{{ bin_dir }}/kubectl --kubeconfig /etc/kubernetes/admin.conf -n metallb-system create secret generic memberlist --from-literal=secretkey={{ metallb_rand.stdout }}"
-  become: true
-  when:
-    - inventory_hostname == groups['kube_control_plane'][0]
-    - metallb_secret.rc != 0

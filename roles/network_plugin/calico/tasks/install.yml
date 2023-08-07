@@ -167,8 +167,10 @@
     - name: Calico | Get existing FelixConfiguration
       command: "{{ bin_dir }}/calicoctl.sh get felixconfig default -o json"
       register: _felix_cmd
-      ignore_errors: True
+      failed_when: False
+      #ignore_errors: True
       changed_when: False
+
 
     - name: Calico | Set kubespray FelixConfiguration
       set_fact:
@@ -197,7 +199,8 @@
       set_fact:
         _felix_config: "{{ _felix_cmd.stdout | from_json | combine(_felix_config, recursive=True) }}"
       when:
-        - _felix_cmd is success
+        - _felix_cmd.stdout != "null"
+        #- _felix_cmd is success
 
     - name: Calico | Configure calico FelixConfiguration
       command:
@@ -211,7 +214,8 @@
     - name: Calico | Get existing calico network pool
       command: "{{ bin_dir }}/calicoctl.sh get ippool {{ calico_pool_name }} -o json"
       register: _calico_pool_cmd
-      ignore_errors: True
+      failed_when: False
+      #ignore_errors: True
       changed_when: False
 
     - name: Calico | Set kubespray calico network pool
@@ -236,7 +240,8 @@
       set_fact:
         _calico_pool: "{{ _calico_pool_cmd.stdout | from_json | combine(_calico_pool, recursive=True) }}"
       when:
-        - _calico_pool_cmd is success
+        - _calico_pool_cmd.stdout != "null"
+        #- _calico_pool_cmd is success
 
     - name: Calico | Configure calico network pool
       command:
@@ -250,7 +255,8 @@
     - name: Calico | Get existing calico ipv6 network pool
       command: "{{ bin_dir }}/calicoctl.sh get ippool {{ calico_pool_name }}-ipv6 -o json"
       register: _calico_pool_ipv6_cmd
-      ignore_errors: True
+      failed_when: False
+      #ignore_errors: True
       changed_when: False
 
     - name: Calico | Set kubespray calico network pool
@@ -275,7 +281,8 @@
       set_fact:
         _calico_pool_ipv6: "{{ _calico_pool_ipv6_cmd.stdout | from_json | combine(_calico_pool_ipv6, recursive=True) }}"
       when:
-        - _calico_pool_ipv6_cmd is success
+        - _calico_pool_ipv6_cmd.stdout != "null"
+        #- _calico_pool_ipv6_cmd is success
 
     - name: Calico | Configure calico ipv6 network pool
       command:
@@ -310,7 +317,8 @@
     - name: Calico | Get existing BGP Configuration
       command: "{{ bin_dir }}/calicoctl.sh get bgpconfig default -o json"
       register: _bgp_config_cmd
-      ignore_errors: True
+      failed_when: False
+      #ignore_errors: True
       changed_when: False
 
     - name: Calico | Set kubespray BGP Configuration
@@ -338,7 +346,8 @@
       set_fact:
         _bgp_config: "{{ _bgp_config_cmd.stdout | from_json | combine(_bgp_config, recursive=True) }}"
       when:
-        - _bgp_config_cmd is success
+        - _bgp_config_cmd.stdout != "null"
+        #- _bgp_config_cmd is success
 
     - name: Calico | Set up BGP Configuration
       command:
